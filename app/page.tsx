@@ -10,7 +10,7 @@ import { tomorrow } from "react-syntax-highlighter/dist/esm/styles/prism"
 import { useAgents } from "./AgentContext"
 import { FeedbackModal } from "./components/FeedbackModal"
 import type { Agent } from "./AgentContext"
-import type { Feedback } from "./types"
+import type { ExtraProps } from "react-markdown"
 
 type Message = {
   id: string
@@ -524,10 +524,14 @@ export default function Chatbot() {
                     <div className="markdown-content">
                       <ReactMarkdown
                         components={{
-                          code({ node, inline, className, children, ...props }) {
+                          code({ node, className, children, ...props }: JSX.IntrinsicElements["code"] & ExtraProps) {
                             const match = /language-(\w+)/.exec(className || "")
-                            return !inline && match ? (
-                              <SyntaxHighlighter style={tomorrow} language={match[1]} PreTag="div" {...props}>
+                            return match ? (
+                              <SyntaxHighlighter 
+                                style={tomorrow} 
+                                language={match[1]} 
+                                PreTag="div"
+                              >
                                 {String(children).replace(/\n$/, "")}
                               </SyntaxHighlighter>
                             ) : (
