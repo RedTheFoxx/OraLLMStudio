@@ -8,7 +8,6 @@ import ReactMarkdown from "react-markdown"
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter"
 import { tomorrow } from "react-syntax-highlighter/dist/esm/styles/prism"
 import { useAgents } from "./AgentContext"
-import { Toast } from "boosted"
 import { FeedbackModal } from "./components/FeedbackModal"
 import type { Agent } from "./AgentContext"
 import type { Feedback } from "./types"
@@ -58,24 +57,33 @@ export default function Chatbot() {
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false)
   const [currentVote, setCurrentVote] = useState<"up" | "down" | null>(null)
   const [currentMessageId, setCurrentMessageId] = useState<string | null>(null)
+  const [isClient, setIsClient] = useState(false)
 
   const activeAgents = agents.filter((agent) => agent.active)
 
   useEffect(() => {
-    const toastEl = document.getElementById("chatToast")
-    if (toastEl) {
-      const toast = new Toast(toastEl)
-      if (showToast) {
-        toast.show()
-        setTimeout(() => {
-          toast.hide()
-          setShowToast(false)
-        }, 5000)
-      } else {
-        toast.hide()
+    setIsClient(true)
+  }, [])
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && isClient) {
+      const toastEl = document.getElementById("chatToast")
+      if (toastEl) {
+        import("boosted").then(({ Toast }) => {
+          const toast = new Toast(toastEl)
+          if (showToast) {
+            toast.show()
+            setTimeout(() => {
+              toast.hide()
+              setShowToast(false)
+            }, 5000)
+          } else {
+            toast.hide()
+          }
+        })
       }
     }
-  }, [showToast])
+  }, [showToast, isClient])
 
   const createDefaultConversation = (agent: Agent): Conversation => {
     return {
@@ -247,14 +255,17 @@ export default function Chatbot() {
   }
 
   const deleteAllConversations = () => {
-    if (
-      window.confirm("Êtes-vous sûr de vouloir supprimer toutes les conversations ? Cette action est irréversible.")
-    ) {
-      setConversations([])
-      setCurrentConversation(null)
-      setToastMessage("Toutes les conversations ont été supprimées.")
-      setToastType("success")
-      setShowToast(true)
+    // Only run in browser environment
+    if (typeof window !== 'undefined') {
+      if (
+        window.confirm("Êtes-vous sûr de vouloir supprimer toutes les conversations ? Cette action est irréversible.")
+      ) {
+        setConversations([])
+        setCurrentConversation(null)
+        setToastMessage("Toutes les conversations ont été supprimées.")
+        setToastType("success")
+        setShowToast(true)
+      }
     }
   }
 

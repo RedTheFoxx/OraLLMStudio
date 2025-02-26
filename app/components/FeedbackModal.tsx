@@ -16,13 +16,16 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, o
   const [voterName, setVoterName] = useState("")
 
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden"
-    } else {
-      document.body.style.overflow = "unset"
-    }
-    return () => {
-      document.body.style.overflow = "unset"
+    // Only run in browser environment
+    if (typeof window !== 'undefined') {
+      if (isOpen) {
+        document.body.style.overflow = "hidden"
+      } else {
+        document.body.style.overflow = "unset"
+      }
+      return () => {
+        document.body.style.overflow = "unset"
+      }
     }
   }, [isOpen])
 
