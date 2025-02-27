@@ -99,6 +99,6 @@ Le streaming permet une expérience plus interactive où la réponse apparaît m
 
 Un projet en solitaire et open-source réalisé pour Orange Business - Digital Services France.
 
-Orange Boosted Framework est égalemnt open-source.
+Orange Boosted Framework est également open-source.
 
 **Retrieval Augmented Generation*
