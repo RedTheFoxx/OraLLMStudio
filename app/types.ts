@@ -4,6 +4,7 @@ export type Message = {
   attachment?: string
   id: string
   vote?: "up" | "down"
+  sources?: string[]
 }
 
 export type Feedback = {
@@ -20,5 +21,11 @@ export type Conversation = {
   agentId: string
   createdAt: Date
   feedback: Feedback[]
+}
+
+export type ExtraProps = {
+  node?: any
+  className?: string
+  children?: React.ReactNode
 }
 

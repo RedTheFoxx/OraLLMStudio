@@ -1,0 +1,111 @@
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes slideIn {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+.slide-in {
+  animation: slideIn 0.3s ease-in-out;
+}
+.delete-animation {
+  transition: all 0.3s ease-in-out;
+}
+.delete-animation.deleting {
+  opacity: 0;
+  transform: translateX(-20px);
+}
+.conversation-list {
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+}
+.conversation-item {
+  transition: all 0.2s ease-in-out;
+}
+.conversation-item:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+.conversation-item.active {
+  background-color: #ff7900;
+  color: white;
+}
+.file-upload-button {
+  transition: all 0.2s ease-in-out;
+}
+.file-upload-button:hover {
+  transform: scale(1.05);
+}
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.markdown-content {
+  font-size: 0.9rem;
+}
+.markdown-content p {
+  margin-bottom: 0.5rem;
+}
+.markdown-content h1, .markdown-content h2, .markdown-content h3 {
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+.markdown-content ul, .markdown-content ol {
+  margin-bottom: 0.5rem;
+  padding-left: 1.5rem;
+}
+.markdown-content pre {
+  margin-bottom: 0.5rem;
+}
+.chat-container {
+  height: calc(100vh - 200px);
+  overflow-y: auto;
+}
+.llm-params {
+  font-size: 0.8rem;
+  border: 1px solid #000000;
+  border-radius: 0.375rem;
+  padding: 1rem;
+}
+.llm-params .form-range {
+  width: 100%;
+}
+.llm-params .quantity-selector {
+  display: inline-flex;
+  align-items: stretch;
+}
+.quantity-selector input[type="number"] {
+  text-align: center;
+  -moz-appearance: textfield;
+}
+.quantity-selector input[type="number"]::-webkit-outer-spin-button,
+.quantity-selector input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.quantity-selector .btn-icon {
+  padding: 0.25rem 0.5rem;
+}
+.conversation-title {
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  margin: -2px -4px;
+}
+.conversation-title:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+.conversation-title-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: inherit;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  font-size: inherit;
+} 
