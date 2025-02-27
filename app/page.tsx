@@ -11,6 +11,7 @@ import { useAgents } from "./AgentContext"
 import { FeedbackModal } from "./components/FeedbackModal"
 import type { Agent } from "./AgentContext"
 import type { ExtraProps } from "react-markdown"
+import { sendChatMessage, processStreamingResponse, checkBackendHealth } from "./api/chatClient"
 
 type Message = {
   id: string
@@ -58,11 +59,25 @@ export default function Chatbot() {
   const [currentVote, setCurrentVote] = useState<"up" | "down" | null>(null)
   const [currentMessageId, setCurrentMessageId] = useState<string | null>(null)
   const [isClient, setIsClient] = useState(false)
+  const [backendStatus, setBackendStatus] = useState<"checking" | "online" | "offline">("checking")
 
   const activeAgents = agents.filter((agent) => agent.active)
 
   useEffect(() => {
     setIsClient(true)
+    
+    // Check backend health when component mounts
+    const checkBackend = async () => {
+      try {
+        const isHealthy = await checkBackendHealth()
+        setBackendStatus(isHealthy ? "online" : "offline")
+      } catch (error) {
+        console.error("Error checking backend health:", error)
+        setBackendStatus("offline")
+      }
+    }
+    
+    checkBackend()
   }, [])
 
   useEffect(() => {
@@ -163,6 +178,12 @@ export default function Chatbot() {
   const sendMessage = async (attachment?: string) => {
     if (!currentConversation) return
     if (!inputMessage.trim() && !attachment) return
+    if (backendStatus === "offline") {
+      setToastMessage("Le backend n'est pas disponible. Veuillez réessayer plus tard.")
+      setToastType("danger")
+      setShowToast(true)
+      return
+    }
 
     setIsLoading(true)
 
@@ -183,30 +204,90 @@ export default function Chatbot() {
 
     setInputMessage("")
 
-    // Simulate streaming response
+    // Add empty assistant message that will be filled with streaming response
     const assistantMessage: Message = {
       id: Date.now().toString(),
       role: "assistant",
       content: "",
     }
+    
     setCurrentConversation((prev) => {
       if (!prev) return prev
       return { ...prev, messages: [...prev.messages, assistantMessage] }
     })
 
-    let responseContent = ""
-    if (selectedAgent?.name === "Assistant Général") {
-      responseContent = `En tant qu'assistant utile, je suis là pour vous aider avec toutes vos questions ou tâches. Comment puis-je vous aider aujourd'hui ?`
-    } else if (selectedAgent?.name === "Expert en Code") {
-      responseContent = `En tant qu'expert en codage, je peux vous aider avec des questions de programmation, des revues de code et des meilleures pratiques. Quel sujet de codage spécifique souhaitez-vous aborder ?`
-    } else if (selectedAgent?.name === "Analyste de Données") {
-      responseContent = `En tant qu'analyste de données, je peux vous aider avec l'analyse de données, la visualisation et les concepts statistiques. Quelle question liée aux données avez-vous ?`
-    } else {
-      responseContent = `Vous avez dit : ${inputMessage}. Voici une réponse simulée en streaming pour démontrer l'effet.`
+    try {
+      // Get the current agent
+      const agent = agents.find((a) => a.id === currentConversation.agentId) || agents[0]
+      
+      // Send message to backend
+      const response = await sendChatMessage(
+        updatedConversation.messages,
+        agent,
+        temperature,
+        true // Use streaming by default
+      )
+      
+      if (response instanceof ReadableStream) {
+        // Handle streaming response
+        await processStreamingResponse(
+          response,
+          (content) => {
+            // Update the assistant's message with each chunk
+            setCurrentConversation((prev) => {
+              if (!prev) return prev
+              const lastMessage = prev.messages[prev.messages.length - 1]
+              if (lastMessage.role === "assistant") {
+                const updatedMessages = [
+                  ...prev.messages.slice(0, -1),
+                  {
+                    ...lastMessage,
+                    content: lastMessage.content + content,
+                  },
+                ]
+                return { ...prev, messages: updatedMessages }
+              }
+              return prev
+            })
+          },
+          () => {
+            // Streaming complete
+            setIsLoading(false)
+          },
+          (error) => {
+            console.error("Error in streaming response:", error)
+            setToastMessage("Erreur lors de la réception de la réponse.")
+            setToastType("danger")
+            setShowToast(true)
+            setIsLoading(false)
+          }
+        )
+      } else {
+        // Handle non-streaming response
+        setCurrentConversation((prev) => {
+          if (!prev) return prev
+          const lastMessage = prev.messages[prev.messages.length - 1]
+          if (lastMessage.role === "assistant") {
+            const updatedMessages = [
+              ...prev.messages.slice(0, -1),
+              {
+                ...lastMessage,
+                content: response.message,
+              },
+            ]
+            return { ...prev, messages: updatedMessages }
+          }
+          return prev
+        })
+        setIsLoading(false)
+      }
+    } catch (error) {
+      console.error("Error sending message:", error)
+      setToastMessage("Erreur lors de l'envoi du message.")
+      setToastType("danger")
+      setShowToast(true)
+      setIsLoading(false)
     }
-
-    await simulateStreamingResponse(responseContent)
-    setIsLoading(false)
   }
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -766,6 +847,12 @@ export default function Chatbot() {
         onSubmit={handleFeedbackSubmit}
         vote={currentVote || "up"}
       />
+
+      {backendStatus === "offline" && (
+        <div className="alert alert-danger m-2" role="alert">
+          Le backend n'est pas disponible. Certaines fonctionnalités peuvent ne pas fonctionner correctement.
+        </div>
+      )}
     </div>
   )
 }
